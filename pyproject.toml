@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "okpos-backend-assignment"
+version = "0.1.0"
+description = "Backend assignment project for OKPOS"
+authors = ["Cha Hwa Young <chahwayoung214@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8, <3.9"
+django = "2.2.24"
+drf-writable-nested = "0.6.3"
+drf-yasg = "^1.21.10"
+pytest = "8.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
