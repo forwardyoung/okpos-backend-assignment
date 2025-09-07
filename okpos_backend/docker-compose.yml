@@ -14,9 +14,9 @@ services:
       - backend_network
 
   backend:
-    build: .
-    # Poetry 제거, 일반 gunicorn 명령어로 변경
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     volumes:
       - static_volume:/app/static
     expose:

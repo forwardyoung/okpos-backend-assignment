@@ -17,11 +17,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --upgrade pip
 
 # 6. requirements.txt 복사 및 설치
-COPY requirements.txt /app/
+COPY ../requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 7. 소스 코드 복사
-COPY . /app/
+COPY .. /app/
 
 # 8. Gunicorn 실행
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
