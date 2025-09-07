@@ -15,16 +15,16 @@ services:
 
   backend:
     build: .
-    command: poetry run gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    # Poetry 제거, 일반 gunicorn 명령어로 변경
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      - .:/app
       - static_volume:/app/static
     expose:
       - 8000
     environment:
       - POSTGRES_DB=okpos_db
-      - POSTGRES_USER=okpos_user
-      - POSTGRES_PASSWORD=okpos_password
+      - POSTGRES_USER=okpos
+      - POSTGRES_PASSWORD=okpos1234
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
     depends_on:
