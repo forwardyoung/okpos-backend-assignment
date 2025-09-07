@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=okpos_db
+      - POSTGRES_USER=okpos
+      - POSTGRES_PASSWORD=okpos1234
+    restart: always
+    networks:
+      - backend_network
+
+  backend:
+    build: .
+    command: poetry run gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+    expose:
+      - 8000
+    environment:
+      - POSTGRES_DB=okpos_db
+      - POSTGRES_USER=okpos_user
+      - POSTGRES_PASSWORD=okpos_password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - backend_network
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/app/static
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - backend_network
+
+networks:
+  backend_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  static_volume:
