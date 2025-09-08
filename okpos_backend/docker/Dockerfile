@@ -23,5 +23,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 7. 소스 코드 복사
 COPY .. /app/
 
+# Ensure entrypoint.sh has executable permissions and correct line endings
+RUN apt-get update && apt-get install -y dos2unix \
+    && dos2unix /app/docker/entrypoint.sh \
+    && chmod +x /app/docker/entrypoint.sh
+
 # 8. Gunicorn 실행
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
+
