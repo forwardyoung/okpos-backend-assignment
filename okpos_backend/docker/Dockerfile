@@ -30,4 +30,3 @@ RUN apt-get update && apt-get install -y dos2unix \
 
 # 8. Gunicorn 실행
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
-

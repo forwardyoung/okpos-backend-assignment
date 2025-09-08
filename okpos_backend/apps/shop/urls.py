@@ -13,7 +13,7 @@ urlpatterns = [
         name="products",
     ),
     path(
-            "products/<int:pk>/",
+        "products/<int:pk>/",
         ProductViewSet.as_view(
             {
                 "get": "retrieve",

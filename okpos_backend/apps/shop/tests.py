@@ -1,5 +1,4 @@
 # apps/shop/tests.py
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -16,13 +15,15 @@ class BaseProductAPITestCase(APITestCase):
         self.another_tag = Tag.objects.create(name="AnotherExistTag")
 
         # URL 설정
-        self.list_url = reverse('products')
+        self.list_url = reverse("products")
 
     def get_detail_url(self, pk):
         """상세 URL 헬퍼 메서드"""
-        return reverse('products-detail', kwargs={'pk': pk})
+        return reverse("products-detail", kwargs={"pk": pk})
 
-    def create_product_with_relations(self, name="TestProduct", options_data=None, tags=None):
+    def create_product_with_relations(
+        self, name="TestProduct", options_data=None, tags=None
+    ):
         """관계가 포함된 상품 생성 헬퍼"""
         product = Product.objects.create(name=name)
 
@@ -45,26 +46,26 @@ class BaseProductAPITestCase(APITestCase):
 
         for product in products:
             # 필수 필드 검증
-            self.assertIn('pk', product)
-            self.assertIn('name', product)
-            self.assertIn('option_set', product)
-            self.assertIn('tag_set', product)
+            self.assertIn("pk", product)
+            self.assertIn("name", product)
+            self.assertIn("option_set", product)
+            self.assertIn("tag_set", product)
 
             # 옵션 형식 검증
-            for option in product['option_set']:
-                self.assertIn('pk', option)
-                self.assertIn('name', option)
-                self.assertIn('price', option)
-                self.assertIsInstance(option['pk'], int)
-                self.assertIsInstance(option['name'], str)
-                self.assertIsInstance(option['price'], int)
+            for option in product["option_set"]:
+                self.assertIn("pk", option)
+                self.assertIn("name", option)
+                self.assertIn("price", option)
+                self.assertIsInstance(option["pk"], int)
+                self.assertIsInstance(option["name"], str)
+                self.assertIsInstance(option["price"], int)
 
             # 태그 형식 검증
-            for tag in product['tag_set']:
-                self.assertIn('pk', tag)
-                self.assertIn('name', tag)
-                self.assertIsInstance(tag['pk'], int)
-                self.assertIsInstance(tag['name'], str)
+            for tag in product["tag_set"]:
+                self.assertIn("pk", tag)
+                self.assertIn("name", tag)
+                self.assertIsInstance(tag["pk"], int)
+                self.assertIsInstance(tag["name"], str)
 
 
 class ProductCreateAPITestCase(BaseProductAPITestCase):
@@ -77,15 +78,15 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
             "option_set": [
                 {"name": "TestOption1", "price": 1000},
                 {"name": "TestOption2", "price": 500},
-                {"name": "TestOption3", "price": 0}
+                {"name": "TestOption3", "price": 0},
             ],
             "tag_set": [
                 {"pk": self.existing_tag.pk, "name": "ExistTag"},
-                {"name": "NewTag"}
-            ]
+                {"name": "NewTag"},
+            ],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         # 기본 검증
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -95,26 +96,26 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
         self.assert_response_format(response_data)
 
         # 데이터 내용 검증
-        self.assertEqual(response_data['name'], 'TestProduct')
-        self.assertEqual(len(response_data['option_set']), 3)
-        self.assertEqual(len(response_data['tag_set']), 2)
+        self.assertEqual(response_data["name"], "TestProduct")
+        self.assertEqual(len(response_data["option_set"]), 3)
+        self.assertEqual(len(response_data["tag_set"]), 2)
 
         # 옵션명 검증
-        option_names = {opt['name'] for opt in response_data['option_set']}
+        option_names = {opt["name"] for opt in response_data["option_set"]}
         expected_options = {"TestOption1", "TestOption2", "TestOption3"}
         self.assertEqual(option_names, expected_options)
 
         # 태그명 검증
-        tag_names = {tag['name'] for tag in response_data['tag_set']}
+        tag_names = {tag["name"] for tag in response_data["tag_set"]}
         expected_tags = {"ExistTag", "NewTag"}
         self.assertEqual(tag_names, expected_tags)
 
         # DB 검증
-        created_product = Product.objects.get(pk=response_data['pk'])
-        self.assertEqual(created_product.name, 'TestProduct')
+        created_product = Product.objects.get(pk=response_data["pk"])
+        self.assertEqual(created_product.name, "TestProduct")
         self.assertEqual(created_product.option_set.count(), 3)
         self.assertEqual(created_product.tag_set.count(), 2)
-        self.assertTrue(Tag.objects.filter(name='NewTag').exists())
+        self.assertTrue(Tag.objects.filter(name="NewTag").exists())
         self.assertEqual(Tag.objects.count(), 3)  # existing_tag + another_tag + NewTag
 
     def test_create_product_with_only_existing_tags(self):
@@ -126,11 +127,11 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
             "option_set": [{"name": "Option1", "price": 2000}],
             "tag_set": [
                 {"pk": self.existing_tag.pk, "name": "ExistTag"},
-                {"pk": self.another_tag.pk, "name": "AnotherExistTag"}
-            ]
+                {"pk": self.another_tag.pk, "name": "AnotherExistTag"},
+            ],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         # 새로운 태그가 생성되지 않았는지 확인
@@ -143,31 +144,28 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
         request_data = {
             "name": "ProductWithNewTags",
             "option_set": [{"name": "Option1", "price": 1500}],
-            "tag_set": [
-                {"name": "NewTag1"},
-                {"name": "NewTag2"}
-            ]
+            "tag_set": [{"name": "NewTag1"}, {"name": "NewTag2"}],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Tag.objects.count(), initial_tag_count + 2)
-        self.assertTrue(Tag.objects.filter(name='NewTag1').exists())
-        self.assertTrue(Tag.objects.filter(name='NewTag2').exists())
+        self.assertTrue(Tag.objects.filter(name="NewTag1").exists())
+        self.assertTrue(Tag.objects.filter(name="NewTag2").exists())
 
     def test_create_product_without_options(self):
         """옵션 없이 상품 생성 테스트"""
         request_data = {
             "name": "ProductWithoutOptions",
             "option_set": [],
-            "tag_set": [{"name": "TagOnly"}]
+            "tag_set": [{"name": "TagOnly"}],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        created_product = Product.objects.get(pk=response.json()['pk'])
+        created_product = Product.objects.get(pk=response.json()["pk"])
         self.assertEqual(created_product.option_set.count(), 0)
         self.assertEqual(created_product.tag_set.count(), 1)
 
@@ -176,13 +174,13 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
         request_data = {
             "name": "ProductWithoutTags",
             "option_set": [{"name": "OnlyOption", "price": 3000}],
-            "tag_set": []
+            "tag_set": [],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        created_product = Product.objects.get(pk=response.json()['pk'])
+        created_product = Product.objects.get(pk=response.json()["pk"])
         self.assertEqual(created_product.option_set.count(), 1)
         self.assertEqual(created_product.tag_set.count(), 0)
 
@@ -191,22 +189,25 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
         request_data = {
             "name": "InvalidTagProduct",
             "option_set": [{"name": "Option1", "price": 1000}],
-            "tag_set": [{"pk": 99999, "name": "NonExistentTag"}]
+            "tag_set": [{"pk": 99999, "name": "NonExistentTag"}],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
-        self.assertIn(response.status_code, [status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND])
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_400_BAD_REQUEST, status.HTTP_404_NOT_FOUND],
+        )
 
     def test_create_product_with_empty_option_name(self):
         """빈 옵션명으로 요청 시 오류 처리 테스트"""
         request_data = {
             "name": "InvalidOptionProduct",
             "option_set": [{"name": "", "price": 1000}],
-            "tag_set": []
+            "tag_set": [],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -215,23 +216,25 @@ class ProductCreateAPITestCase(BaseProductAPITestCase):
         request_data = {
             "name": "NegativePriceProduct",
             "option_set": [{"name": "NegativeOption", "price": -1000}],
-            "tag_set": []
+            "tag_set": [],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         # 비즈니스 로직에 따라 허용 여부가 결정됨
-        self.assertIn(response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST])
+        self.assertIn(
+            response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST]
+        )
 
     def test_create_product_response_format(self):
         """응답 데이터 형식 검증"""
         request_data = {
             "name": "FormatTestProduct",
             "option_set": [{"name": "FormatOption", "price": 1000}],
-            "tag_set": [{"name": "FormatTag"}]
+            "tag_set": [{"name": "FormatTag"}],
         }
 
-        response = self.client.post(self.list_url, request_data, format='json')
+        response = self.client.post(self.list_url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assert_response_format(response.json())
@@ -251,9 +254,9 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
             options_data=[
                 {"name": "TestOption1", "price": 1000},
                 {"name": "TestOption2", "price": 500},
-                {"name": "TestOption3", "price": 0}
+                {"name": "TestOption3", "price": 0},
             ],
-            tags=[self.existing_tag, self.new_tag]
+            tags=[self.existing_tag, self.new_tag],
         )
 
         # 개별 옵션 참조 저장 (테스트에서 사용)
@@ -268,16 +271,16 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
             "option_set": [
                 {"pk": self.option1.pk, "name": "TestOption1", "price": 1000},
                 {"pk": self.option2.pk, "name": "Edit TestOption2", "price": 1500},
-                {"name": "Edit New Option", "price": 300}
+                {"name": "Edit New Option", "price": 300},
             ],
             "tag_set": [
                 {"pk": self.existing_tag.pk, "name": "ExistTag"},
                 {"pk": self.new_tag.pk, "name": "NewTag"},
-                {"name": "Edit New Tag"}
-            ]
+                {"name": "Edit New Tag"},
+            ],
         }
 
-        response = self.client.patch(url, request_data, format='json')
+        response = self.client.patch(url, request_data, format="json")
 
         # 기본 검증
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -287,23 +290,24 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
         self.assert_response_format(response_data)
 
         # 데이터 변경 검증
-        self.assertEqual(len(response_data['option_set']), 3)
-        self.assertEqual(len(response_data['tag_set']), 3)
+        self.assertEqual(len(response_data["option_set"]), 3)
+        self.assertEqual(len(response_data["tag_set"]), 3)
 
         # 옵션 변경 확인
-        option_names = {opt['name'] for opt in response_data['option_set']}
+        option_names = {opt["name"] for opt in response_data["option_set"]}
         expected_options = {"TestOption1", "Edit TestOption2", "Edit New Option"}
         self.assertEqual(option_names, expected_options)
 
         # 가격 변경 확인
         edited_option = next(
-            opt for opt in response_data['option_set']
-            if opt['name'] == 'Edit TestOption2'
+            opt
+            for opt in response_data["option_set"]
+            if opt["name"] == "Edit TestOption2"
         )
-        self.assertEqual(edited_option['price'], 1500)
+        self.assertEqual(edited_option["price"], 1500)
 
         # 태그 변경 확인
-        tag_names = {tag['name'] for tag in response_data['tag_set']}
+        tag_names = {tag["name"] for tag in response_data["tag_set"]}
         expected_tags = {"ExistTag", "NewTag", "Edit New Tag"}
         self.assertEqual(tag_names, expected_tags)
 
@@ -320,10 +324,10 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
         request_data = {
             "name": "TestProduct",
             "option_set": [],
-            "tag_set": [{"pk": self.existing_tag.pk, "name": "ExistTag"}]
+            "tag_set": [{"pk": self.existing_tag.pk, "name": "ExistTag"}],
         }
 
-        response = self.client.patch(url, request_data, format='json')
+        response = self.client.patch(url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_product = Product.objects.get(pk=self.product.pk)
@@ -334,11 +338,13 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
         url = self.get_detail_url(self.product.pk)
         request_data = {
             "name": "TestProduct",
-            "option_set": [{"pk": self.option1.pk, "name": "TestOption1", "price": 1000}],
-            "tag_set": []
+            "option_set": [
+                {"pk": self.option1.pk, "name": "TestOption1", "price": 1000}
+            ],
+            "tag_set": [],
         }
 
-        response = self.client.patch(url, request_data, format='json')
+        response = self.client.patch(url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_product = Product.objects.get(pk=self.product.pk)
@@ -349,7 +355,7 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
         url = self.get_detail_url(99999)
         request_data = {"name": "Updated Name"}
 
-        response = self.client.patch(url, request_data, format='json')
+        response = self.client.patch(url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -358,13 +364,13 @@ class ProductUpdateAPITestCase(BaseProductAPITestCase):
         url = self.get_detail_url(self.product.pk)
         request_data = {"name": "Updated Product Name"}
 
-        response = self.client.patch(url, request_data, format='json')
+        response = self.client.patch(url, request_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
-        self.assertEqual(response_data['name'], 'Updated Product Name')
-        self.assertEqual(len(response_data['option_set']), 3)
-        self.assertEqual(len(response_data['tag_set']), 2)
+        self.assertEqual(response_data["name"], "Updated Product Name")
+        self.assertEqual(len(response_data["option_set"]), 3)
+        self.assertEqual(len(response_data["tag_set"]), 2)
 
 
 class ProductListAPITestCase(BaseProductAPITestCase):
@@ -382,9 +388,9 @@ class ProductListAPITestCase(BaseProductAPITestCase):
             options_data=[
                 {"name": "TestOption1", "price": 1000},
                 {"name": "TestOption2", "price": 500},
-                {"name": "TestOption3", "price": 0}
+                {"name": "TestOption3", "price": 0},
             ],
-            tags=[self.existing_tag, self.another_tag]
+            tags=[self.existing_tag, self.another_tag],
         )
 
         self.product2 = self.create_product_with_relations(name="TestProduct2")
@@ -392,7 +398,7 @@ class ProductListAPITestCase(BaseProductAPITestCase):
         self.product3 = self.create_product_with_relations(
             name="TestProduct3",
             options_data=[{"name": "Option3-1", "price": 2000}],
-            tags=[self.test_tag]
+            tags=[self.test_tag],
         )
 
     def test_list_all_products(self):
@@ -407,18 +413,18 @@ class ProductListAPITestCase(BaseProductAPITestCase):
         self.assertEqual(len(response_data), 3)
 
         # 각 상품별 세부 검증
-        products_by_name = {p['name']: p for p in response_data}
+        products_by_name = {p["name"]: p for p in response_data}
 
         # 첫 번째 상품 검증
-        product1_data = products_by_name['TestProduct']
-        self.assertEqual(product1_data['pk'], self.product1.pk)
-        self.assertEqual(len(product1_data['option_set']), 3)
-        self.assertEqual(len(product1_data['tag_set']), 2)
+        product1_data = products_by_name["TestProduct"]
+        self.assertEqual(product1_data["pk"], self.product1.pk)
+        self.assertEqual(len(product1_data["option_set"]), 3)
+        self.assertEqual(len(product1_data["tag_set"]), 2)
 
         # 두 번째 상품 검증 (빈 옵션/태그)
-        product2_data = products_by_name['TestProduct2']
-        self.assertEqual(len(product2_data['option_set']), 0)
-        self.assertEqual(len(product2_data['tag_set']), 0)
+        product2_data = products_by_name["TestProduct2"]
+        self.assertEqual(len(product2_data["option_set"]), 0)
+        self.assertEqual(len(product2_data["tag_set"]), 0)
 
     def test_list_empty_products(self):
         """상품이 없을 때 목록 조회 테스트"""
@@ -444,9 +450,9 @@ class ProductRetrieveAPITestCase(BaseProductAPITestCase):
             options_data=[
                 {"name": "TestOption1", "price": 1000},
                 {"name": "TestOption2", "price": 500},
-                {"name": "TestOption3", "price": 0}
+                {"name": "TestOption3", "price": 0},
             ],
-            tags=[self.existing_tag, self.new_tag]
+            tags=[self.existing_tag, self.new_tag],
         )
 
     def test_retrieve_existing_product(self):
@@ -461,17 +467,17 @@ class ProductRetrieveAPITestCase(BaseProductAPITestCase):
         self.assert_response_format(response_data)
 
         # 데이터 내용 검증
-        self.assertEqual(response_data['pk'], self.product.pk)
-        self.assertEqual(response_data['name'], 'TestProduct')
-        self.assertEqual(len(response_data['option_set']), 3)
-        self.assertEqual(len(response_data['tag_set']), 2)
+        self.assertEqual(response_data["pk"], self.product.pk)
+        self.assertEqual(response_data["name"], "TestProduct")
+        self.assertEqual(len(response_data["option_set"]), 3)
+        self.assertEqual(len(response_data["tag_set"]), 2)
 
         # 특정 데이터 확인
-        option_names = {opt['name'] for opt in response_data['option_set']}
+        option_names = {opt["name"] for opt in response_data["option_set"]}
         expected_options = {"TestOption1", "TestOption2", "TestOption3"}
         self.assertEqual(option_names, expected_options)
 
-        tag_names = {tag['name'] for tag in response_data['tag_set']}
+        tag_names = {tag["name"] for tag in response_data["tag_set"]}
         expected_tags = {"ExistTag", "NewTag"}
         self.assertEqual(tag_names, expected_tags)
 
@@ -491,9 +497,9 @@ class ProductRetrieveAPITestCase(BaseProductAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_data = response.json()
-        self.assertEqual(response_data['name'], 'EmptyProduct')
-        self.assertEqual(len(response_data['option_set']), 0)
-        self.assertEqual(len(response_data['tag_set']), 0)
+        self.assertEqual(response_data["name"], "EmptyProduct")
+        self.assertEqual(len(response_data["option_set"]), 0)
+        self.assertEqual(len(response_data["tag_set"]), 0)
 
     def test_retrieve_with_query_optimization(self):
         """N+1 쿼리 최적화 확인"""
